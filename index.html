@@ -57,6 +57,7 @@ z-index: 999;
     padding: 15px;
     margin-bottom: 10px;
     color: black;
+    display: none;
 }
 #pharmacists:hover, #findappts:hover {
     background: #ddd;
@@ -74,6 +75,8 @@ z-index: 999;
     <div id="map"></div>
     <script>
       var map, infoWindow, pos;
+      var markers = []
+      
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: -34.397, lng: 150.644},
@@ -176,6 +179,7 @@ map.setMapTypeId('tehgrayz')
           position: place.geometry.location,
           icon: icon, zIndex: zIndex
         });
+        markers.push(marker);
 
         google.maps.event.addListener(marker, 'click', function() {
           infowindow.setContent(place.name);
@@ -196,6 +200,11 @@ map.setMapTypeId('tehgrayz')
               $("#symptoms").css("top", $("#symptoms").offset().top - 4 + "px")
               setTimeout(moveBarUp, 10);
           } else {
+          for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(null);
+          }
+          
+          $("#findappts").css("display", "inline-block");
           $("#bottombars").fadeIn();
           var service = new google.maps.places.PlacesService(map);
         service.nearbySearch({
@@ -204,11 +213,25 @@ map.setMapTypeId('tehgrayz')
           type: ['doctor']
         }, callback);
         
-        service.nearbySearch({
+        $.getJSON( "pharm.json?a="+Math.random(), function( data ) {
+            var items = [];
+            var shownp = 0;
+            $.each( data, function( key, val ) {
+        if ( $("#symptoms").val().indexOf( val.name ) > -1 ) {
+  // String B contains String A
+  service.nearbySearch({
           location: pos,
           radius: 2000,
           type: ['pharmacy']
         }, callback2);
+        
+        $("#pharmacists").css("display", "inline-block");
+        shownp = 1;
+}
+if(shownp == 0) {$("#pharmacists").css("display", "none"); }
+        
+        
+        })})
         
         
         service.nearbySearch({
