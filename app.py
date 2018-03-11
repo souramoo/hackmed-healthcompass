@@ -17,6 +17,19 @@ def hello(problem):
         return "1"
     else:
         return "0"
+        
+def is_free(ts, te):
+    pass
+        
+@app.route("/c/")
+def freetimes():
+    # fduj2a3a0mdrrmtpi8en0jemsk@group.calendar.google.com - University Health Service
+    # 21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com - Upper Thorpe Medical Centre
+    # for each calendar
+    #    iterate through ten minute intervals
+    #        if free, say so
+    #    if not, say so
+    pass
 
         
 @app.after_request
@@ -25,3 +38,6 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
+    
+if __name__ == '__main__':
+    app.run(threaded=True)

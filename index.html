@@ -63,6 +63,37 @@ z-index: 999;
     background: #ddd;
     text-decoration: none;
 }
+
+#overlay {
+position:absolute;
+top: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.3);
+z-index: 1000;
+text-align: center;
+display: none;
+}
+
+.place {
+font-size: 150%;
+}
+.offer {
+font-size: 100%;
+}
+.rating {
+font-size: 70%;
+}
+
+.offerdiv {
+display: inline-block;
+text-align: center;
+background: white;
+border-radius: 20px;
+padding: 20px;
+width: 600px;
+margin-top: 30px;
+}
 </style>
 </head>
 <body>
@@ -256,7 +287,9 @@ if(shownp == 0) {$("#pharmacists").css("display", "none"); }
       });
       });
       
-      
+      function showOverlay(){
+      $("#overlay").fadeIn()
+      }
     </script>
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI8Aky613VYT8bNhMl6-RK5X8jr-JIZL4&callback=initMap&libraries=places">
@@ -267,11 +300,15 @@ if(shownp == 0) {$("#pharmacists").css("display", "none"); }
     
     <div id="bottombars">
     <a href="#" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
-    <a href="#" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
+    <a href="javascript:showOverlay()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
     </div>
     
-    
 </div>
+
+    
+    <div id="overlay">
+        <div class="offerdiv"><span class="place">University Health Services</span><br /><span class="offer">Appointment available at 16:00 - 0.2 miles away</span><br /><span class="rating">5 stars - "Very good service"<br />Click to book</span></div>
+    </div>
 <div id="footer">
 
 </div>
