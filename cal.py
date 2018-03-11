@@ -127,39 +127,33 @@ def triggerCall():
                 i += 1
 
 
-import sqlite3                
+import sqlite3  
+import os
+import nexmo
+
+
+              
 def callPeopleAbout(freetime):
     conn = sqlite3.connect('alerts.db')
     c = conn.cursor()
     a = 0
     c.execute('SELECT * FROM alerts')
     for row in c.fetchall():
+        print(row)
         accepted = False
         c.execute("DELETE FROM alerts WHERE id="+str(row[0]))
         # call, do they accept?
-        if accepted:
-            # add to calendar
-            name = "Souradip"
-            credentials = get_credentials()
-            http = credentials.authorize(httplib2.Http())
-            service = discovery.build('calendar', 'v3', http=http)
-            event = {
-                'summary': name + ' appointment',
-                'location': '',
-                'description': row[4],
-                'start': {
-                'dateTime': freetime['time'],
-                'timeZone': 'Europe/London',
-                },
-                'end': {
-                'dateTime': (datetime.datetime.strptime(freetime['time'], "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                'timeZone': 'Europe/London',
-                },
-                'reminders': {
-                'useDefault': False,
-                },
-            }
-            event = service.events().insert(calendarId=freetime['calid'], body=event).execute()
+        #jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MjA3NzI5OTAsImp0aSI6IjllN2VlZDYwLTI1MmItMTFlOC05ZGY4LWUxYWEzMTE4NDBiZSIsImFwcGxpY2F0aW9uX2lkIjoiNWI1YzUwNDMtNDM0NC00Y2MxLWE4MGItNjBmNmJmZDc0NDk1In0.YGjqLWtG6tgtXP8dNZyds7Veg0ezh3kOBTAeXfoEjTQbqIAsF8vAfH7gxBmVUf-RDSlI_77ezPg-OS2ZDLoTlSNF9dEXPPTh7jXlef4VUD1ocNU2ycqjYCom8ORxOAqV5GCjjPOLhGM9bL0qBDPpcjK_839BdSdtgquW7-rFjZw3o8pOMFyDs66227b2G-bt1oXxok7eawgt8U0eCgiaT5DyBbGp2YSYDCCjlzuIjyTZ8VkC-nWckUgqsmCyxv0mxDx93Xd9rp5QM_26kWrm-vBVYP33GEnm56p1DYkU_6Ny4J_Qm9a-PeyiHR51XWroZgtRBJwBihDUhKCYSoSxog"
+        print("Getting nexmo jwt...")
+        client = nexmo.Client(key="f3c49f86", secret="fnoMqVZT311Y0Q5I")
+        client = nexmo.Client(application_id="5b5c5043-4344-4cc1-a80b-60f6bfd74495", private_key="C:\\Users\\souradip\\private.key")
+        response = client.create_call({
+            'to': [{'type': 'phone', 'number': str(row[3][1:])}],
+            'from': {'type': 'phone', 'number': '447418340461'},
+            'answer_url': ["http://e403a9da.ngrok.io/voice_script/"+str(freetime['time'])+"/"+str(freetime['name'])+"/"]
+        })
+        print(response)
+        return
     conn.commit()
     conn.close()
     pass
@@ -168,7 +162,7 @@ import time
 def main():
     while True:
         triggerCall()
-        time.sleep(5)
+        time.sleep(10)
     
 """ 
 def main():

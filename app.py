@@ -157,6 +157,62 @@ def book(time, calid, complaint):
             locname = a[1]
     return "{\"status\": \"done\", \"loc\": \""+locname+"\"}"
 
+    
+@app.route("/voice_script/<date>/<place>/")
+def vscript(date, place):
+    dss = datetime.datetime.strptime(date).strftime("%A %d %B at %-H %M hours")
+    locname = ""
+    for a in medcentres:
+        if a[0] == calid:
+            locname = a[1]
+    return '[\
+    {\
+        "action": "talk",\
+        "voiceName": "Chipmunk",\
+        "text": "Hi, this is Health Compass. There is an appointment available for '+dss+' at '+locname+'. Please press 1 to accept this booking or anything else to decline.",\
+    "bargeIn": true\
+  },\
+  {\
+    "action": "input",\
+    "eventUrl": ["http://e403a9da.ngrok.io/voice_response/"]\
+  }\
+]'
+
+
+@app.route("/voice_response/<date>/<place>/", methods=['GET', 'POST'])
+def voiceresponse(date, place):
+    accepted = False
+    dat = request.get_json()
+    print(dat)
+    try:
+        if dat.dtmf == "1":
+            accepted = True
+        if accepted:
+            # add to calendar
+            name = "Souradip"
+            credentials = get_credentials()
+            http = credentials.authorize(httplib2.Http())
+            service = discovery.build('calendar', 'v3', http=http)
+            event = {
+                'summary': name + ' appointment',
+                'location': '',
+                'description': row[4],
+                'start': {
+                'dateTime': date,
+                'timeZone': 'Europe/London',
+                },
+                'end': {
+                'dateTime': (datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'timeZone': 'Europe/London',
+                },
+                'reminders': {
+                'useDefault': False,
+                },
+            }
+            event = service.events().insert(calendarId=place, body=event).execute()
+    except:
+        pass
+    return ""
         
 @app.after_request
 def after_request(response):
