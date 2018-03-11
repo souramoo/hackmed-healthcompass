@@ -1,8 +1,11 @@
-
 from flask import Flask
 import requests, re
 
 app = Flask(__name__)
+
+@app.route("/")
+def hello2():
+    return "hello"
 
 @app.route("/p/<problem>")
 def hello(problem):
