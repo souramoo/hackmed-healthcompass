@@ -213,12 +213,11 @@ map.setMapTypeId('tehgrayz')
           type: ['doctor']
         }, callback);
         
-        $.getJSON( "pharm.json?a="+Math.random(), function( data ) {
+        $.getJSON( "http://localhost:5000/p/"+encodeURI($("#symptoms").val()), function( data ) {
+        console.log(data)
             var items = [];
             var shownp = 0;
-            $.each( data, function( key, val ) {
-        if ( $("#symptoms").val().indexOf( val.name ) > -1 ) {
-  // String B contains String A
+        if ( data == "1" || $("#symptoms").val().indexOf( "vaccin" ) > -1  || $("#symptoms").val().indexOf( "smoking" ) > -1  ) {
   service.nearbySearch({
           location: pos,
           radius: 2000,
@@ -230,8 +229,7 @@ map.setMapTypeId('tehgrayz')
 }
 if(shownp == 0) {$("#pharmacists").css("display", "none"); }
         
-        
-        })})
+        })
         
         
         service.nearbySearch({
@@ -271,6 +269,8 @@ if(shownp == 0) {$("#pharmacists").css("display", "none"); }
     <a href="#" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
     <a href="#" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
     </div>
+    
+    
 </div>
 <div id="footer">
 
