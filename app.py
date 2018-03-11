@@ -12,6 +12,7 @@ from oauth2client.file import Storage
 import datetime
 import pytz
 import json
+import sqlite3
 
 flags = []
 medcentres = [('21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', 'Porter Brook Medical Centre', 'ChIJpZPvtGSCeUgRaWE7aMvStvg'),
@@ -44,25 +45,16 @@ def hello(problem):
     except:
         return "0 error"
         
-@app.route("/wi/<problem>")
-def wi(problem):
+@app.route("/alert/<lat>/<lng>/<number>/<symptom>/")
+def alert(lat, lng, number, symptom):
     try:
-        bias = 0
-        r = requests.get('https://www.nhs.uk/Search/?q='+problem)
-        p = re.compile("<li data-fb-result=https://www.nhs.uk/conditions/(.+?)>")
-        uu = "https://www.nhs.uk/conditions/" + p.search(r.content.decode("utf-8")).group(1)
-        r = requests.get(uu)
-        print(uu)
-        if "walk-in" in r.content.decode("utf-8"):
-            bias = 1
-        else:
-            r = requests.get('https://www.nhs.uk/NHSEngland/AboutNHSservices/Emergencyandurgentcareservices/Pages/Walk-incentresSummary.aspx')
-            if urllib.parse.unquote(problem.lower()) in r.content.decode("utf-8").lower():
-                bias = 1
-        if bias == 1:
-            return "1"
-        else:
-            return "0"
+        # add to db
+        conn = sqlite3.connect('alerts.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO alerts(lat, lng, number, symptom) VALUES ("+lat+","+lng+",'"+number+"', '"+symptom+"')")
+        conn.commit()
+        conn.close()
+        return ""
     except:
         return "0 error"
         

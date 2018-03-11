@@ -12,6 +12,10 @@
   content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
   <link rel="stylesheet" href="intlTelInput.css" />
 <style>
+.thx {
+display: none;
+}
+
 .iti-flag {background-image: url("img/flags.png");}
 
 @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2 / 1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
@@ -212,7 +216,7 @@ text-decoration: none;
 
     <div id="map"></div>
     <script>
-    
+    var numberappts = 0;
       var map, infoWindow, pos;
       var markers = []
       var SEARCH_RADIUS = 4000;
@@ -263,8 +267,9 @@ map.setMapTypeId('tehgrayz')
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
             pos = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
+              //lat: position.coords.latitude,
+              //lng: position.coords.longitude
+              lat: 53.3815906,lng:-1.4839796
             };
             map.setCenter(pos);
             
@@ -315,6 +320,7 @@ map.setMapTypeId('tehgrayz')
           //console.log(data)
           console.log(results)
           data.sort(comparedate);
+          numberappts = 0;
           
             var items = [];
             $("#overlay_appt").html("");
@@ -323,6 +329,7 @@ map.setMapTypeId('tehgrayz')
                //console.log(results[i].place_id)
                //console.log(val.place_id)
                  if(results[i].place_id == val.place_id){
+                 //numberappts++;
                     createMarker(results[i], 'yellow.png', 999);
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
                     var today = new Date();
@@ -537,7 +544,9 @@ $.each(countryData, function(i, country) {
   $("#notify").click(function(){
     var intlNumber = $("#tel").intlTelInput("getNumber");
     // store this number in a db for calling
+    $.getJSON( "http://localhost:5000/alert/"+pos.lat+"/"+pos.lng+"/"+intlNumber+"/"+encodeURI($("#symptoms").val())+"/?a="+Math.random(), function( data ) {})
     // show ux
+    $(".askno").fadeOut(function(){$(".thx").fadeIn()})
   })
 
       
@@ -557,7 +566,12 @@ $.each(countryData, function(i, country) {
       });
       
       function showOverlayAppt(){
+      if(numberappts > 0) {
       $("#overlay_appt").fadeIn()
+      } else {
+      $("#overlay_alert").fadeIn()
+      }
+      
       $("#map").css("position","fixed")
       $("#map").css("top","0")
       $("#map").css("width","100%")
@@ -610,8 +624,9 @@ $.each(countryData, function(i, country) {
     </div>
     <div id="overlay_alert" class="overlay">
     <div class="offerdiv" style="min-height: 50vh;padding-top: 248px;">
-    <div id="radar" style="margin-top: 10vh;" ></div><br />
-    <h2>Seems a bit busy at the moment...</h2><br /><h3>But don't worry, we're still looking out for any last minute cancellations for you!</h3><br /><p>Please enter your phone number below to be notified about cancellations!<br /><br /><input type="tel" id="tel" style="margin-right: 10px"><input type="button" id="notify" value="Notify me!"></p>
+    <div id="radar" style="margin-top: 10vh;" ></div><br /><div class="askno">
+    <h2>Seems a bit busy at the moment...</h2><br /><h3>But don't worry, we're still looking out for any last minute cancellations for you!</h3><br /><p>Please enter your phone number below and we'll call you about cancellations today or tomorrow!<br /><br /><input type="tel" id="tel" style="margin-right: 10px"><input type="button" id="notify" value="Notify me!"></p></div>
+    <div class="thx"><h3>Thanks!</h3><h2>We'll call you when we find something.</h2></div>
 <p id="result"></p>
     </div>
     </div>
