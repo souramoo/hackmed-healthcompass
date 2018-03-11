@@ -58,6 +58,7 @@ z-index: 999;
     margin-bottom: 10px;
     color: black;
     display: none;
+    border: 1px solid black;
 }
 #pharmacists:hover, #findappts:hover, #walkin:hover {
     background: #ddd;
@@ -68,7 +69,8 @@ z-index: 999;
 position:absolute;
 top: 0;
 width: 100%;
-height: 100%;
+height: auto;
+min-height: 100%;
 background: rgba(0,0,0,0.3);
 z-index: 1000;
 text-align: center;
@@ -91,8 +93,32 @@ text-align: center;
 background: white;
 border-radius: 20px;
 padding: 20px;
-width: 600px;
-margin-top: 30px;
+max-width: 600px;
+width: 80%;
+margin-top: 20px;
+margin-left: 20px;
+margin-bottom: 30px;
+color: black;
+}
+
+.offerdiv:hover {
+text-decoration: none;
+}
+
+::-webkit-input-placeholder {
+   text-align: center;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+   text-align: center;  
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+   text-align: center;  
+}
+
+:-ms-input-placeholder {  
+   text-align: center; 
 }
 </style>
 </head>
@@ -193,7 +219,18 @@ map.setMapTypeId('tehgrayz')
                  if(results[i].name == val.name){
                     createMarker(results[i], 'yellow.png', 999);
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
-                    $("#overlay_appt").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at 16:00 - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
+                    var today = new Date();
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+
+                    var d = new Date(val.time);
+                    var datestring = ""
+                    if(d.toDateString() == today.toDateString()) datestring += "<b>today</b>";
+                    else if(d.toDateString() == tomorrow.toDateString())  datestring += "<b>tomorrow</b>";
+                    else datestring += "<b>" + ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+    d.getFullYear() + "</b> ";
+                     datestring += " at <b>" + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + "hrs</b>";
+                    $("#overlay_appt").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at '+datestring+' - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
                     }
                }
             });
@@ -205,8 +242,21 @@ map.setMapTypeId('tehgrayz')
         if (status === google.maps.places.PlacesServiceStatus.OK) {
         
           
+            $("#overlay_pharm").html("");
+            results.sort(
+          function(x, y)
+          {
+          
+              var a = getDistance(pos, {lat: x.geometry.location.lat(), lng: x.geometry.location.lng()})
+              var b = getDistance(pos, {lat: y.geometry.location.lat(), lng: y.geometry.location.lng()})
+             return a - b;
+          }
+        );
                for (var i = 0; i < results.length; i++) {
                     createMarker(results[i], 'blue.png');
+                    var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
+                    $("#overlay_pharm").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
+                    
                }
           }
       }
@@ -240,7 +290,6 @@ map.setMapTypeId('tehgrayz')
         markers.push(marker);
 
         google.maps.event.addListener(marker, 'click', function() {
-        console.log(place)
           infowindow.setContent("<b style='font-size: 120%'>"+place.name+"</b><br />"+place.vicinity+"<br /><br />Open now? <b>"+(place.opening_hours.open_now==true?"yes":"no")+"</b>");
           infowindow.open(map, this);
         });
@@ -323,6 +372,8 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
           }
       }
       $(document).ready(function(){
+      $(".overlay").click(function(e){if(e.target !== e.currentTarget) return; $(".overlay").fadeOut()});
+      
       $("#symptoms").keypress(function(ev){
             var keycode = (ev.keyCode ? ev.keyCode : ev.which);
           if(keycode == 13) {
@@ -336,6 +387,13 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
       function showOverlayAppt(){
       $("#overlay_appt").fadeIn()
       }
+      function showOverlayPharm(){
+      $("#overlay_pharm").fadeIn();
+      $("#map").css("position","fixed")
+      $("#map").css("top","0")
+      $("#map").css("width","100%")
+      $("#map").css("height","100%")
+      }
     </script>
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI8Aky613VYT8bNhMl6-RK5X8jr-JIZL4&callback=initMap&libraries=places">
@@ -345,7 +403,7 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     <input type="text"  placeholder="What's wrong? :(" id="symptoms" />
     
     <div id="bottombars">
-    <a href="#" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
+    <a href="javascript:showOverlayPharm()" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
     <a href="#" id="walkin">Walk-in Centres<br /><span style="font-size:80%">Might be able to see you faster than a GP</span></a>
     <a href="javascript:showOverlayAppt()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
     </div>
