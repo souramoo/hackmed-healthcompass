@@ -12,9 +12,13 @@ width: 100%;
 height: 120px;
 padding: 10px;
 background: rgb(0,94,184);
+position:fixed;
+top:0;
+z-index:1;
 }
 #map {
-height: 90%;
+height: 100%;
+position: fixed;
 }
 
 
@@ -210,7 +214,7 @@ map.setMapTypeId('tehgrayz')
         service.nearbySearch({
           location: pos,
           radius: 2000,
-          name: "Hospital"
+          name: "A&E"
         }, callback3);
         
            // search for gp appointments
