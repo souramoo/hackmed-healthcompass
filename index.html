@@ -120,6 +120,29 @@ text-decoration: none;
 :-ms-input-placeholder {  
    text-align: center; 
 }
+.circ{
+    opacity: 0;
+    stroke-dasharray: 130;
+    stroke-dashoffset: 130;
+    -webkit-transition: all 1s;
+    -moz-transition: all 1s;
+    -ms-transition: all 1s;
+    -o-transition: all 1s;
+    transition: all 1s;
+}
+.tick{
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    -webkit-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -moz-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -ms-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -o-transition: stroke-dashoffset 1s 0.5s ease-out;
+    transition: stroke-dashoffset 1s 0.5s ease-out;
+}
+.drawn + svg .path{
+    opacity: 1;
+    stroke-dashoffset: 0;
+}
 </style>
 </head>
 <body>
@@ -133,6 +156,7 @@ text-decoration: none;
     <script>
       var map, infoWindow, pos;
       var markers = []
+      var SEARCH_RADIUS = 4000;
       
       var rad = function(x) {
   return x * Math.PI / 180;
@@ -195,7 +219,7 @@ map.setMapTypeId('tehgrayz')
         /*var service = new google.maps.places.PlacesService(map);
         service.nearbySearch({
           location: pos,
-          radius: 2000,
+          radius: SEARCH_RADIUS,
           type: ['doctor']
         }, callback);*/
         
@@ -218,8 +242,8 @@ map.setMapTypeId('tehgrayz')
     }
       function comparedate(a,b) {
         return (
-            isFinite(a=convertdate(a).valueOf()) &&
-            isFinite(b=convertdate(b).valueOf()) ?
+            isFinite(a=convertdate(a.time).valueOf()) &&
+            isFinite(b=convertdate(b.time).valueOf()) ?
             (a>b)-(a<b) :
             NaN
         );
@@ -237,8 +261,8 @@ map.setMapTypeId('tehgrayz')
             $("#overlay_appt").html("");
             $.each( data, function( key, val ) {
                for (var i = 0; i < results.length; i++) {
-               console.log(results[i].place_id)
-               console.log(val.place_id)
+               //console.log(results[i].place_id)
+               //console.log(val.place_id)
                  if(results[i].place_id == val.place_id){
                     createMarker(results[i], 'yellow.png', 999);
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
@@ -253,12 +277,39 @@ map.setMapTypeId('tehgrayz')
                     else datestring += "<b>" + ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
     d.getFullYear() + "</b> ";
                      datestring += " at <b>" + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + "hrs</b>";
-                    $("#overlay_appt").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at '+datestring+' - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
+                    $("#overlay_appt").append('<a href="javascript:book(\''+val.calid+'\', \''+val.time+'\', \''+encodeURI($("#symptoms").val())+'\')" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at '+datestring+' - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></a>')
                     }
                }
             });
           });
         }
+      }
+      
+      
+      function book(calid, time, complaint){
+        $.getJSON( "http://localhost:5000/book/"+calid+"/"+time+"/"+complaint+"/?a="+Math.random(), function( data ) {
+          //console.log(data)
+          console.log(data)
+            if(data.status == "done") {
+                $("#overlay_appt").fadeOut()
+                //$("#overlay_booked").html('<div class="booked"></div>');
+                var today = new Date();
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+
+                    var d = new Date(time);
+                    var datestring = ""
+                    if(d.toDateString() == today.toDateString()) datestring += "<b>today</b>";
+                    else if(d.toDateString() == tomorrow.toDateString())  datestring += "<b>tomorrow</b>";
+                    else datestring += "<b>" + ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+    d.getFullYear() + "</b> ";
+                     datestring += " at <b>" + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + "hrs</b>";
+                $(".appttime").html(datestring);
+                $(".apptloc").html(data.loc);
+                $("#overlay_booked").fadeIn()
+                $(".trigger").toggleClass("drawn")
+            }
+          })
       }
       
       function callback2(results, status) {
@@ -297,8 +348,23 @@ map.setMapTypeId('tehgrayz')
       
       function callback4(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
-               for (var i = 0; i < Math.min(3,results.length); i++) {
+               
+          
+            $("#overlay_wic").html("");
+            results.sort(
+          function(x, y)
+          {
+          
+              var a = getDistance(pos, {lat: x.geometry.location.lat(), lng: x.geometry.location.lng()})
+              var b = getDistance(pos, {lat: y.geometry.location.lat(), lng: y.geometry.location.lng()})
+             return a - b;
+          }
+        );
+               for (var i = 0; i < results.length; i++) {
                     createMarker(results[i], 'green.png');
+                    var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
+                    $("#overlay_wic").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
+                    
                }
           }
       }
@@ -340,18 +406,18 @@ map.setMapTypeId('tehgrayz')
           var service = new google.maps.places.PlacesService(map);
         service.nearbySearch({
           location: pos,
-          radius: 2000,
+          radius: SEARCH_RADIUS,
           type: ['doctor']
         }, callback);
         
         $.getJSON( "http://localhost:5000/p/"+encodeURI($("#symptoms").val()), function( data ) {
-        console.log(data)
+        //console.log(data)
             var items = [];
             var shownp = 0;
         if ( data == "1" || $("#symptoms").val().indexOf( "vaccin" ) > -1  || $("#symptoms").val().indexOf( "smoking" ) > -1  ) {
   service.nearbySearch({
           location: pos,
-          radius: 2000,
+          radius: SEARCH_RADIUS,
           type: ['pharmacy']
         }, callback2);
         
@@ -363,13 +429,13 @@ if(shownp == 0) {$("#pharmacists").css("display", "none"); }
         })
         
         $.getJSON( "http://localhost:5000/wi/"+encodeURI($("#symptoms").val()), function( data ) {
-        console.log(data)
+        //console.log(data)
             var items = [];
             var shownp = 0;
         if ( data == "1" || $("#symptoms").val().indexOf( "vaccin" ) > -1  || $("#symptoms").val().indexOf( "smoking" ) > -1  ) {
   service.nearbySearch({
           location: pos,
-          radius: 2000,
+          radius: SEARCH_RADIUS,
           name: 'Walk-in centre'
         }, callback4);
         
@@ -383,7 +449,7 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
         
         service.nearbySearch({
           location: pos,
-          radius: 2000,
+          radius: SEARCH_RADIUS,
           name: "A&E"
         }, callback3);
         
@@ -409,9 +475,20 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
       
       function showOverlayAppt(){
       $("#overlay_appt").fadeIn()
+      $("#map").css("position","fixed")
+      $("#map").css("top","0")
+      $("#map").css("width","100%")
+      $("#map").css("height","100%")
       }
       function showOverlayPharm(){
       $("#overlay_pharm").fadeIn();
+      $("#map").css("position","fixed")
+      $("#map").css("top","0")
+      $("#map").css("width","100%")
+      $("#map").css("height","100%")
+      }
+      function showOverlayWic(){
+      $("#overlay_wic").fadeIn();
       $("#map").css("position","fixed")
       $("#map").css("top","0")
       $("#map").css("width","100%")
@@ -427,7 +504,7 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     
     <div id="bottombars">
     <a href="javascript:showOverlayPharm()" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
-    <a href="#" id="walkin">Walk-in Centres<br /><span style="font-size:80%">Might be able to see you faster than a GP</span></a>
+    <a href="javascript:showOverlayWic()" id="walkin">Walk-in Centres<br /><span style="font-size:80%">Might be able to see you faster than a GP</span></a>
     <a href="javascript:showOverlayAppt()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
     </div>
     
@@ -439,6 +516,19 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     <div id="overlay_pharm" class="overlay">
     </div>
     <div id="overlay_wic" class="overlay">
+    </div>
+    <div id="overlay_booked" class="overlay">
+    <div class="offerdiv" onclick="javascript:$('#overlay_booked').fadeOut()" style="margin-top: 16vh;">
+    <div class="trigger"></div>
+<svg style="width: 20vw;" version="1.1" id="tick" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 37 37" style="enable-background:new 0 0 37 37;" xml:space="preserve">
+<path class="circ path" style="fill:none;stroke:#99C24D;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;" d="
+	M30.5,6.5L30.5,6.5c6.6,6.6,6.6,17.4,0,24l0,0c-6.6,6.6-17.4,6.6-24,0l0,0c-6.6-6.6-6.6-17.4,0-24l0,0C13.1-0.2,23.9-0.2,30.5,6.5z"
+	/>
+<polyline class="tick path" style="fill:none;stroke:#99C24D;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;" points="
+	11.6,20 15.9,24.2 26.4,13.8 "/>
+</svg><br /><br />
+You've been booked to see a GP at <b class="apptloc"></b> <span class="appttime"></span>.<br /><br />Click anywhere to close!</div>
     </div>
 <div id="footer">
 
