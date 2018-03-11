@@ -191,7 +191,7 @@ def voiceresponse(date, place):
     dat = request.get_json()
     print(dat)
     try:
-        if dat.dtmf == "1":
+        if "1" in dat.dtmf:
             accepted = True
         if accepted:
             # add to calendar
