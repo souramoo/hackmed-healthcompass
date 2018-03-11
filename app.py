@@ -187,37 +187,38 @@ def vscript(date, place):
 
 @app.route("/voice_response/<date>/<place>/", methods=['GET', 'POST'])
 def voiceresponse(date, place):
-    accepted = False
-    dat = request.get_json()
-    print(dat)
-    try:
-        if "1" in dat.dtmf:
-            accepted = True
-        if accepted:
+    #accepted = False
+    #dat = request.get_json()
+    #print(dat)
+    #try:
+        #if "1" in dat.dtmf:
+        #    accepted = True
+        #if accepted:
             # add to calendar
-            name = "Souradip"
-            credentials = get_credentials()
-            http = credentials.authorize(httplib2.Http())
-            service = discovery.build('calendar', 'v3', http=http)
-            event = {
-                'summary': name + ' appointment',
-                'location': '',
-                'description': row[4],
-                'start': {
-                'dateTime': date,
-                'timeZone': 'Europe/London',
-                },
-                'end': {
-                'dateTime': (datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                'timeZone': 'Europe/London',
-                },
-                'reminders': {
-                'useDefault': False,
-                },
-            }
-            event = service.events().insert(calendarId=place, body=event).execute()
-    except:
-        pass
+    name = "Souradip"
+    credentials = get_credentials()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+    event = {
+        'summary': name + ' appointment',
+        'location': '',
+        'description': row[4],
+        'start': {
+        'dateTime': date,
+        'timeZone': 'Europe/London',
+        },
+        'end': {
+        'dateTime': (datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        'timeZone': 'Europe/London',
+        },
+        'reminders': {
+        'useDefault': False,
+        },
+    }
+    event = service.events().insert(calendarId=place, body=event).execute()
+#    except:
+#        print ("error")
+#        pass
     return Response(response="",
                     status=200,
                     mimetype="application/json")
