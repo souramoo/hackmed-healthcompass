@@ -206,17 +206,40 @@ map.setMapTypeId('tehgrayz')
           handleLocationError(false, infoWindow, map.getCenter());
         }
       }
-      
-      
+      function convertdate(d) {
+        return (
+            d.constructor === Date ? d :
+            d.constructor === Array ? new Date(d[0],d[1],d[2]) :
+            d.constructor === Number ? new Date(d) :
+            d.constructor === String ? new Date(d) :
+            typeof d === "object" ? new Date(d.year,d.month,d.date) :
+            NaN
+        );
+    }
+      function comparedate(a,b) {
+        return (
+            isFinite(a=convertdate(a).valueOf()) &&
+            isFinite(b=convertdate(b).valueOf()) ?
+            (a>b)-(a<b) :
+            NaN
+        );
+    }
       function callback(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
         
-          $.getJSON( "appts.json?a="+Math.random(), function( data ) {
+          //$.getJSON( "appts.json?a="+Math.random(), function( data ) {
+          $.getJSON( "http://localhost:5000/c/?a="+Math.random(), function( data ) {
+          //console.log(data)
+          console.log(results)
+          data.sort(comparedate);
+          
             var items = [];
             $("#overlay_appt").html("");
             $.each( data, function( key, val ) {
                for (var i = 0; i < results.length; i++) {
-                 if(results[i].name == val.name){
+               console.log(results[i].place_id)
+               console.log(val.place_id)
+                 if(results[i].place_id == val.place_id){
                     createMarker(results[i], 'yellow.png', 999);
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
                     var today = new Date();

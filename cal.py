@@ -8,7 +8,7 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-import datetime
+import datetime, time
 import pytz
 import json
 
@@ -53,6 +53,7 @@ def isFree(service, cal, ts, te):
        }
     eventsResult = service.freebusy().query(body=body).execute()
     cal_dict = eventsResult[u'calendars']
+    print(cal_dict[cal])
     return not cal_dict[cal]['busy']
     
 def getFree(cal, calname):
@@ -84,23 +85,43 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
     
+    cal = '21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com'
+    calname = ''
+    pid = ''
+    
     tz = pytz.timezone('Europe/London')
-    now = datetime.datetime.now()
-    for hours in range(9, 17):
-        for mins in range(0, 60, 10):
-            the_datetime = tz.localize(datetime.datetime(now.year, now.month, now.day, hours, mins+1))
-            the_datetime2 = tz.localize(datetime.datetime(now.year, now.month, now.day, hours+1, mins+9))
-            if isFree(service, '21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', the_datetime, the_datetime2):
-                print("today"+str(hours)+":"+str(mins))
-                
-    tom = datetime.date.today() + datetime.timedelta(days=1)
-    for hours in range(9, 16):
-        for mins in range(0, 60, 10):
-            the_datetime = tz.localize(datetime.datetime(tom.year, tom.month, tom.day, hours, mins+1))
-            the_datetime2 = tz.localize(datetime.datetime(tom.year, tom.month, tom.day, hours+1, mins+9))
-            if isFree(service, '21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', the_datetime, the_datetime2):
-                print("tomm "+str(hours)+":"+str(mins))
-
+    now = datetime.datetime.now() + datetime.timedelta(days=1)
+    the_datetime = tz.localize(datetime.datetime(now.year, now.month, now.day, 9, 0))
+    the_datetime2 = tz.localize(datetime.datetime(now.year, now.month, now.day, 17, 0))
+    body = {
+        "timeMin": the_datetime.isoformat(),
+        "timeMax": the_datetime2.isoformat(),
+        "timeZone": 'Europe/London',
+        "items": [{"id": cal}]
+       }
+    eventsResult = service.freebusy().query(body=body).execute()
+    cal_dict = eventsResult[u'calendars']
+    i = 0
+    a = []
+    while i < len(cal_dict[cal]['busy']):
+        st = datetime.datetime.strptime(cal_dict[cal]['busy'][i]["end"], "%Y-%m-%dT%H:%M:%SZ")
+        #print(st)
+        try:
+            en = datetime.datetime.strptime(cal_dict[cal]['busy'][i+1]["start"], "%Y-%m-%dT%H:%M:%SZ")
+        except:
+            en = the_datetime2.replace(tzinfo=None)
+        j = datetime.timedelta(0)
+        #print(en)
+        while st + j < en:
+            tdt = st + j
+            a.append({"name": calname, "time": tdt.strftime("%Y-%m-%dT%H:%M:%SZ"), "place_id": pid})
+            #print(a)
+            j += datetime.timedelta(minutes=10)
+            #print(j)
+        i += 1
+    print(a)
+    #    print("today"+str(hours)+":"+str(mins))
+    
 
 if __name__ == '__main__':
     main()

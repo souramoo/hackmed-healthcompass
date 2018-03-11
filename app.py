@@ -75,40 +75,6 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-def isFree(service, cal, ts, te):
-    body = {
-        "timeMin": ts.isoformat(),
-        "timeMax": te.isoformat(),
-        "timeZone": 'Europe/London',
-        "items": [{"id": cal}]
-       }
-    eventsResult = service.freebusy().query(body=body).execute()
-    cal_dict = eventsResult[u'calendars']
-    return not cal_dict[cal]['busy']
-    
-def getFree(cal, calname):
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
-    a=[]
-    
-    tz = pytz.timezone('Europe/London')
-    now = datetime.datetime.now()
-    for hours in range(9, 17):
-        for mins in range(0, 60, 10):
-            the_datetime = tz.localize(datetime.datetime(now.year, now.month, now.day, hours, mins))
-            the_datetime2 = tz.localize(datetime.datetime(now.year, now.month, now.day, hours+1, mins+9))
-            if isFree(service, cal, the_datetime, the_datetime2):
-                a.append({"name": calname, "time": the_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")})
-                
-    tom = datetime.date.today() + datetime.timedelta(days=1)
-    for hours in range(9, 16):
-        for mins in range(0, 60, 10):
-            the_datetime = tz.localize(datetime.datetime(tom.year, tom.month, tom.day, hours, mins))
-            the_datetime2 = tz.localize(datetime.datetime(tom.year, tom.month, tom.day, hours+1, mins+9))
-            if isFree(service, cal, the_datetime, the_datetime2):
-                a.append({"name": calname, "time": the_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")})
-    return json.dumps(a)
 
 @app.route("/c/")
 def freetimes():
@@ -118,8 +84,39 @@ def freetimes():
     #    iterate through ten minute intervals
     #        if free, say so
     #    if not, say so
-    return getFree("21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com", "Upper Thorpe Medical Centre")
-    pass
+    credentials = get_credentials()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+    
+    a = []
+    
+    for (cal, calname, pid) in [('21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', 'Porter Brook Medical Centre', 'ChIJpZPvtGSCeUgRaWE7aMvStvg')]:
+        tz = pytz.timezone('Europe/London')
+        now = datetime.datetime.now() + datetime.timedelta(days=1)
+        the_datetime = tz.localize(datetime.datetime(now.year, now.month, now.day, 9, 0))
+        the_datetime2 = tz.localize(datetime.datetime(now.year, now.month, now.day, 17, 0))
+        body = {
+            "timeMin": the_datetime.isoformat(),
+            "timeMax": the_datetime2.isoformat(),
+            "timeZone": 'Europe/London',
+            "items": [{"id": cal}]
+           }
+        eventsResult = service.freebusy().query(body=body).execute()
+        cal_dict = eventsResult[u'calendars']
+        i = 0
+        while i < len(cal_dict[cal]['busy']):
+            st = datetime.datetime.strptime(cal_dict[cal]['busy'][i]["end"], "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                en = datetime.datetime.strptime(cal_dict[cal]['busy'][i+1]["start"], "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                en = the_datetime2.replace(tzinfo=None)
+            j = datetime.timedelta(0)
+            while st + j < en:
+                tdt = st + j
+                a.append({"name": calname, "time": tdt.strftime("%Y-%m-%dT%H:%M:%SZ"), "place_id": pid})
+                j += datetime.timedelta(minutes=10)
+            i += 1
+    return json.dumps(a)
 
         
 @app.after_request
