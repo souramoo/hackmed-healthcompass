@@ -14,7 +14,8 @@ import pytz
 import json
 
 flags = []
-medcentres = [('21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', 'Porter Brook Medical Centre', 'ChIJpZPvtGSCeUgRaWE7aMvStvg'), ('fduj2a3a0mdrrmtpi8en0jemsk@group.calendar.google.com', 'University Of Sheffield Health Centre', 'ChIJ_cbxtHiCeUgRK_eX8gO8cqs')]
+medcentres = [('21akti4jb49iv29jiuf0mjr5p8@group.calendar.google.com', 'Porter Brook Medical Centre', 'ChIJpZPvtGSCeUgRaWE7aMvStvg'),
+              ('fduj2a3a0mdrrmtpi8en0jemsk@group.calendar.google.com', 'University Of Sheffield Health Centre', 'ChIJ_cbxtHiCeUgRK_eX8gO8cqs')]
 
 app = Flask(__name__)
 
@@ -25,11 +26,18 @@ def hello2():
 @app.route("/p/<problem>")
 def hello(problem):
     try:
+        bias = 0
         r = requests.get('https://www.nhs.uk/Search/?q='+problem)
         p = re.compile("<li data-fb-result=https://www.nhs.uk/conditions/(.+?)>")
         uu = "https://www.nhs.uk/conditions/" + p.search(r.content.decode("utf-8")).group(1)
         r = requests.get(uu)
         if "pharmacist can help" in r.content.decode("utf-8"):
+            bias = 1
+        else:
+            r = requests.get('https://www.nhs.uk/nhsengland/aboutnhsservices/pharmacists/pages/pharmacistsandchemists.aspx')
+            if urllib.parse.unquote(problem.lower()) in r.content.decode("utf-8").lower():
+                bias = 1
+        if bias == 1:
             return "1"
         else:
             return "0"

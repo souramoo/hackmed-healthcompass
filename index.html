@@ -71,7 +71,7 @@ top: 0;
 width: 100%;
 height: auto;
 min-height: 100%;
-background: rgba(0,0,0,0.3);
+background: rgba(0,0,0,0.5);
 z-index: 1000;
 text-align: center;
 display: none;
@@ -143,6 +143,53 @@ text-decoration: none;
     opacity: 1;
     stroke-dashoffset: 0;
 }
+
+#radar {
+  background-image: linear-gradient(transparent 49.67%, #0c0 49.67%, #0c0 50.34%, transparent 50.34%, transparent), linear-gradient(45deg, transparent 49.67%, #0c0 49.67%, #0c0 50.34%, transparent 50.34%, transparent), linear-gradient(90deg, transparent 49.67%, #0c0 49.67%, #0c0 50.34%, transparent 50.34%, transparent), linear-gradient(-45deg, transparent 49.67%, #0c0 49.67%, #0c0 50.34%, transparent 50.34%, transparent), radial-gradient(#003300 24%, #0c0 24%, #0c0 25%, #003300 25%, #003300 49%, #0c0 49%, #0c0 50%, #003300 50%);
+  border: 13px solid #888;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px #000, 0 0 67px #000 inset;
+  display: block;
+  margin: auto;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
+}
+#radar::before {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.67), transparent 30%);
+  content: "";
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  right: 37.5%;
+  bottom: 37.5%;
+}
+#radar::after {
+  background-image: linear-gradient(45deg, transparent 50%, #0c0);
+  border-radius: 100% 0 0 0;
+  content: "";
+  height: 100px;
+  position: absolute;
+  left: 0%;
+  width: 50%;
+  transform-origin: 100% 100%;
+  animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -285,9 +332,12 @@ map.setMapTypeId('tehgrayz')
         }
       }
       
-      
+      var inprocess = 0;
       function book(calid, time, complaint){
+      if(inprocess ==1){console.log("inprocess"); return;}
+      inprocess = 1;
         $.getJSON( "http://localhost:5000/book/"+calid+"/"+time+"/"+complaint+"/?a="+Math.random(), function( data ) {
+        inprocess = 0;
           //console.log(data)
           console.log(data)
             if(data.status == "done") {
@@ -329,7 +379,7 @@ map.setMapTypeId('tehgrayz')
                for (var i = 0; i < results.length; i++) {
                     createMarker(results[i], 'blue.png');
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
-                    $("#overlay_pharm").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
+                    $("#overlay_pharm").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">'+results[i].vicinity+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
                     
                }
           }
@@ -363,7 +413,7 @@ map.setMapTypeId('tehgrayz')
                for (var i = 0; i < results.length; i++) {
                     createMarker(results[i], 'green.png');
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
-                    $("#overlay_wic").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
+                    $("#overlay_wic").append('<a href="https://www.google.com/maps/place/?q=place_id:'+results[i].place_id+'" target="_blank" class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">'+results[i].vicinity+'</span><br /><span class="offer">Currently <b>'+(results[i].opening_hours.open_now==true?"open":"closed")+'</b> - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to view more</span></a>')
                     
                }
           }
@@ -424,6 +474,10 @@ map.setMapTypeId('tehgrayz')
         $("#pharmacists").css("display", "inline-block");
         shownp = 1;
 }
+if ( $("#symptoms").val().indexOf( "chest pain" ) > -1 ||  $("#symptoms").val().indexOf( "pain in my chest" ) > -1 ||  $("#symptoms").val().indexOf( "pain in chest" ) > -1) {
+showOverlayChestPain()
+}
+
 if(shownp == 0) {$("#pharmacists").css("display", "none"); }
         
         })
@@ -461,6 +515,9 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
           }
       }
       $(document).ready(function(){
+      $(document).keyup(function(e) {
+  if (e.keyCode === 27) {$('.overlay').fadeOut();   }
+});
       $(".overlay").click(function(e){if(e.target !== e.currentTarget) return; $(".overlay").fadeOut()});
       
       $("#symptoms").keypress(function(ev){
@@ -475,6 +532,14 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
       
       function showOverlayAppt(){
       $("#overlay_appt").fadeIn()
+      $("#map").css("position","fixed")
+      $("#map").css("top","0")
+      $("#map").css("width","100%")
+      $("#map").css("height","100%")
+      }
+      
+      function showOverlayChestPain(){
+      $("#overlay_chestpain").fadeIn()
       $("#map").css("position","fixed")
       $("#map").css("top","0")
       $("#map").css("width","100%")
@@ -505,7 +570,7 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     <div id="bottombars">
     <a href="javascript:showOverlayPharm()" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
     <a href="javascript:showOverlayWic()" id="walkin">Walk-in Centres<br /><span style="font-size:80%">Might be able to see you faster than a GP</span></a>
-    <a href="javascript:showOverlayAppt()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
+    <a href="javascript:showOverlayAppt()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with a GP</span></a>
     </div>
     
 </div>
@@ -517,8 +582,16 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     </div>
     <div id="overlay_wic" class="overlay">
     </div>
+    <div id="overlay_alert" class="overlay">
+    <div class="offerdiv" style="min-height: 50vh;">
+    <div id="radar" style="margin-top: 10vh" ></div>
+    </div>
+    </div>
+    <div id="overlay_chestpain" class="overlay">
+        <img src="chestpain.png" style="width: 40vw;margin-top: 10vh"  onclick="javascript:$('.overlay').fadeOut()"><br /><br /><span style="color:white">Click anywhere to close this.</span>
+    </div>
     <div id="overlay_booked" class="overlay">
-    <div class="offerdiv" onclick="javascript:$('#overlay_booked').fadeOut()" style="margin-top: 16vh;">
+    <div class="offerdiv" onclick="javascript:$('.overlay').fadeOut()" style="margin-top: 16vh;">
     <div class="trigger"></div>
 <svg style="width: 20vw;" version="1.1" id="tick" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 37 37" style="enable-background:new 0 0 37 37;" xml:space="preserve">
