@@ -1,12 +1,23 @@
 <html>
 <head>
+<meta charset="utf-8" /> 
 <title>Health Compass</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="intlTelInput.min.js"></script>
+<script src="utils.js"></script>
+
 <meta name=viewport
   content="width=device-width, initial-scale=1.0, minimum-scale=0.5 maximum-scale=1.0">
+  <link rel="stylesheet" href="intlTelInput.css" />
 <style>
+.iti-flag {background-image: url("img/flags.png");}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2 / 1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+  .iti-flag {background-image: url("img/flags@2x.png");}
+}
+
 #topbar {
 width: 100%;
 height: 120px;
@@ -201,6 +212,7 @@ text-decoration: none;
 
     <div id="map"></div>
     <script>
+    
       var map, infoWindow, pos;
       var markers = []
       var SEARCH_RADIUS = 4000;
@@ -515,6 +527,20 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
           }
       }
       $(document).ready(function(){
+      
+var countryData = $.fn.intlTelInput.getCountryData();
+$.each(countryData, function(i, country) {
+  country.name = country.name.replace(/(.+)\(.+\)/,"$1");
+});
+  $("#tel").intlTelInput({initialCountry: "gb"});
+  
+  $("#notify").click(function(){
+    var intlNumber = $("#tel").intlTelInput("getNumber");
+    // store this number in a db for calling
+    // show ux
+  })
+
+      
       $(document).keyup(function(e) {
   if (e.keyCode === 27) {$('.overlay').fadeOut();   }
 });
@@ -583,8 +609,10 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     <div id="overlay_wic" class="overlay">
     </div>
     <div id="overlay_alert" class="overlay">
-    <div class="offerdiv" style="min-height: 50vh;">
-    <div id="radar" style="margin-top: 10vh" ></div>
+    <div class="offerdiv" style="min-height: 50vh;padding-top: 248px;">
+    <div id="radar" style="margin-top: 10vh;" ></div><br />
+    <h2>Seems a bit busy at the moment...</h2><br /><h3>But don't worry, we're still looking out for any last minute cancellations for you!</h3><br /><p>Please enter your phone number below to be notified about cancellations!<br /><br /><input type="tel" id="tel" style="margin-right: 10px"><input type="button" id="notify" value="Notify me!"></p>
+<p id="result"></p>
     </div>
     </div>
     <div id="overlay_chestpain" class="overlay">
