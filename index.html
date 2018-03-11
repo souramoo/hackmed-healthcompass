@@ -48,7 +48,7 @@ z-index: 999;
     display:none;
 }
 
-#pharmacists, #findappts {
+#pharmacists, #findappts, #walkin {
     display: inline-block;
     width: 300px;
     height: 80px;
@@ -59,12 +59,12 @@ z-index: 999;
     color: black;
     display: none;
 }
-#pharmacists:hover, #findappts:hover {
+#pharmacists:hover, #findappts:hover, #walkin:hover {
     background: #ddd;
     text-decoration: none;
 }
 
-#overlay {
+.overlay {
 position:absolute;
 top: 0;
 width: 100%;
@@ -187,13 +187,13 @@ map.setMapTypeId('tehgrayz')
         
           $.getJSON( "appts.json?a="+Math.random(), function( data ) {
             var items = [];
-            $("#overlay").html("");
+            $("#overlay_appt").html("");
             $.each( data, function( key, val ) {
                for (var i = 0; i < results.length; i++) {
                  if(results[i].name == val.name){
                     createMarker(results[i], 'yellow.png', 999);
                     var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
-                    $("#overlay").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at 16:00 - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
+                    $("#overlay_appt").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at 16:00 - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
                     }
                }
             });
@@ -333,8 +333,8 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
       });
       });
       
-      function showOverlay(){
-      $("#overlay").fadeIn()
+      function showOverlayAppt(){
+      $("#overlay_appt").fadeIn()
       }
     </script>
     <script async defer
@@ -347,13 +347,17 @@ if(shownp == 0) {$("#walkin").css("display", "none"); }
     <div id="bottombars">
     <a href="#" id="pharmacists">Pharmacies<br /><span style="font-size:80%">Can help with your problem more quickly</span></a>
     <a href="#" id="walkin">Walk-in Centres<br /><span style="font-size:80%">Might be able to see you faster than a GP</span></a>
-    <a href="javascript:showOverlay()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
+    <a href="javascript:showOverlayAppt()" id="findappts">Find appointments<br /><span style="font-size:80%">Last minute appointments with your GP</span></a>
     </div>
     
 </div>
 
     
-    <div id="overlay">
+    <div id="overlay_appt" class="overlay">
+    </div>
+    <div id="overlay_pharm" class="overlay">
+    </div>
+    <div id="overlay_wic" class="overlay">
     </div>
 <div id="footer">
 
