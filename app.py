@@ -18,6 +18,17 @@ def hello(problem):
     else:
         return "0"
         
+@app.route("/wi/<problem>")
+def wi(problem):
+    r = requests.get('https://www.nhs.uk/Search/?q='+problem)
+    p = re.compile("<li data-fb-result=https://www.nhs.uk/conditions/(.+?)>")
+    uu = "https://www.nhs.uk/conditions/" + p.search(r.content.decode("utf-8")).group(1)
+    r = requests.get(uu)
+    if "walk-in centre" in r.content.decode("utf-8"):
+        return "1"
+    else:
+        return "0"
+        
 def is_free(ts, te):
     pass
         

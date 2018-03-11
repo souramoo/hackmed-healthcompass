@@ -108,6 +108,22 @@ margin-top: 30px;
       var map, infoWindow, pos;
       var markers = []
       
+      var rad = function(x) {
+  return x * Math.PI / 180;
+};
+
+var getDistance = function(p1, p2) {
+  var R = 6378137; // Earth’s mean radius in meter
+  var dLat = rad(p2.lat - p1.lat);
+  var dLong = rad(p2.lng - p1.lng);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) *
+    Math.sin(dLong / 2) * Math.sin(dLong / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R * c;
+  return d; // returns the distance in meter
+};
+      
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: -34.397, lng: 150.644},
@@ -171,10 +187,13 @@ map.setMapTypeId('tehgrayz')
         
           $.getJSON( "appts.json?a="+Math.random(), function( data ) {
             var items = [];
+            $("#overlay").html("");
             $.each( data, function( key, val ) {
                for (var i = 0; i < results.length; i++) {
                  if(results[i].name == val.name){
                     createMarker(results[i], 'yellow.png', 999);
+                    var dd = getDistance(pos, {lat: results[i].geometry.location.lat(), lng: results[i].geometry.location.lng()});
+                    $("#overlay").append('<div class="offerdiv"><span class="place">'+results[i].name+'</span><br /><span class="offer">Appointment available at 16:00 - '+(dd*1.609/1000).toFixed(2)+' miles away</span><br /><span class="rating">'+results[i].rating+' stars<br />Click to book</span></div>')
                     }
                }
             });
@@ -202,6 +221,14 @@ map.setMapTypeId('tehgrayz')
                }
           }
       }
+      
+      function callback4(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+               for (var i = 0; i < Math.min(3,results.length); i++) {
+                    createMarker(results[i], 'green.png');
+               }
+          }
+      }
 
       function createMarker(place, icon, zIndex=0) {
         var placeLoc = place.geometry.location;
@@ -213,7 +240,8 @@ map.setMapTypeId('tehgrayz')
         markers.push(marker);
 
         google.maps.event.addListener(marker, 'click', function() {
-          infowindow.setContent(place.name);
+        console.log(place)
+          infowindow.setContent("<b style='font-size: 120%'>"+place.name+"</b><br />"+place.vicinity+"<br /><br />Open now? <b>"+(place.opening_hours.open_now==true?"yes":"no")+"</b>");
           infowindow.open(map, this);
         });
       }
@@ -254,6 +282,24 @@ map.setMapTypeId('tehgrayz')
           radius: 2000,
           type: ['pharmacy']
         }, callback2);
+        
+        $("#pharmacists").css("display", "inline-block");
+        shownp = 1;
+}
+if(shownp == 0) {$("#pharmacists").css("display", "none"); }
+        
+        })
+        
+        $.getJSON( "http://localhost:5000/wi/"+encodeURI($("#symptoms").val()), function( data ) {
+        console.log(data)
+            var items = [];
+            var shownp = 0;
+        if ( data == "1" || $("#symptoms").val().indexOf( "vaccin" ) > -1  || $("#symptoms").val().indexOf( "smoking" ) > -1  ) {
+  service.nearbySearch({
+          location: pos,
+          radius: 2000,
+          name: 'Walk-in centre'
+        }, callback4);
         
         $("#pharmacists").css("display", "inline-block");
         shownp = 1;
@@ -307,7 +353,6 @@ if(shownp == 0) {$("#pharmacists").css("display", "none"); }
 
     
     <div id="overlay">
-        <div class="offerdiv"><span class="place">University Health Services</span><br /><span class="offer">Appointment available at 16:00 - 0.2 miles away</span><br /><span class="rating">5 stars - "Very good service"<br />Click to book</span></div>
     </div>
 <div id="footer">
 
