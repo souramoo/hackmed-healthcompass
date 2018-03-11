@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, Response
+from flask import request
 import requests, re, urllib
 import httplib2
 import os
@@ -157,26 +158,31 @@ def book(time, calid, complaint):
             locname = a[1]
     return "{\"status\": \"done\", \"loc\": \""+locname+"\"}"
 
+
+@app.route("/voice", methods=['GET', 'POST'])
+def voice():
+    resp = Response(response="",
+                    status=200,
+                    mimetype="application/json")
+    return resp
     
 @app.route("/voice_script/<date>/<place>/")
 def vscript(date, place):
-    dss = datetime.datetime.strptime(date).strftime("%A %d %B at %-H %M hours")
+    dss = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+    dss = dss.strftime("%A %d %B") + " at " + dss.strftime("%H%M") + " hours"
     locname = ""
+    print("a" + place)
     for a in medcentres:
-        if a[0] == calid:
+        print(place)
+        print(a[0])
+        if a[0] == urllib.parse.unquote(place):
             locname = a[1]
-    return '[\
-    {\
-        "action": "talk",\
-        "voiceName": "Chipmunk",\
-        "text": "Hi, this is Health Compass. There is an appointment available for '+dss+' at '+locname+'. Please press 1 to accept this booking or anything else to decline.",\
-    "bargeIn": true\
-  },\
-  {\
-    "action": "input",\
-    "eventUrl": ["http://e403a9da.ngrok.io/voice_response/"]\
-  }\
-]'
+    res = '[{"action": "talk","voiceName": "Chipmunk","text": "Hi, this is Health Compass. There is an appointment available for '+dss+' at '+locname+'. Please press 1 to accept this booking or anything else to decline.","bargeIn": true},{"action": "input","eventUrl": ["http://e403a9da.ngrok.io/voice_response/'+date+'/'+place+'/"]}]'
+    
+    return Response(response=res,
+                    status=200,
+                    mimetype="application/json")
+   # return '[{"action": "talk","voiceName": "Russell","text": "Hi, this is Russell. You are listening to a text-to-speech Call made with Nexmo\'s Voice API"}]'
 
 
 @app.route("/voice_response/<date>/<place>/", methods=['GET', 'POST'])
@@ -212,7 +218,9 @@ def voiceresponse(date, place):
             event = service.events().insert(calendarId=place, body=event).execute()
     except:
         pass
-    return ""
+    return Response(response="",
+                    status=200,
+                    mimetype="application/json")
         
 @app.after_request
 def after_request(response):

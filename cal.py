@@ -147,11 +147,14 @@ def callPeopleAbout(freetime):
         print("Getting nexmo jwt...")
         client = nexmo.Client(key="f3c49f86", secret="fnoMqVZT311Y0Q5I")
         client = nexmo.Client(application_id="5b5c5043-4344-4cc1-a80b-60f6bfd74495", private_key="C:\\Users\\souradip\\private.key")
+        print(["http://e403a9da.ngrok.io/voice_script/"+str(freetime['time'])+"/"+str(freetime['name'])+"/"])
         response = client.create_call({
             'to': [{'type': 'phone', 'number': str(row[3][1:])}],
             'from': {'type': 'phone', 'number': '447418340461'},
-            'answer_url': ["http://e403a9da.ngrok.io/voice_script/"+str(freetime['time'])+"/"+str(freetime['name'])+"/"]
+            'answer_url': ["http://e403a9da.ngrok.io/voice_script/"+str(freetime['time'])+"/"+str(freetime['calid'])+"/"]
         })
+        conn.commit()
+        conn.close()
         print(response)
         return
     conn.commit()
