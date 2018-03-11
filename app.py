@@ -1,5 +1,5 @@
 from flask import Flask
-import requests, re
+import requests, re, urllib
 
 app = Flask(__name__)
 
@@ -20,11 +20,19 @@ def hello(problem):
         
 @app.route("/wi/<problem>")
 def wi(problem):
+    bias = 0
     r = requests.get('https://www.nhs.uk/Search/?q='+problem)
     p = re.compile("<li data-fb-result=https://www.nhs.uk/conditions/(.+?)>")
     uu = "https://www.nhs.uk/conditions/" + p.search(r.content.decode("utf-8")).group(1)
     r = requests.get(uu)
-    if "walk-in centre" in r.content.decode("utf-8"):
+    print(uu)
+    if "walk-in" in r.content.decode("utf-8"):
+        bias = 1
+    else:
+        r = requests.get('https://www.nhs.uk/NHSEngland/AboutNHSservices/Emergencyandurgentcareservices/Pages/Walk-incentresSummary.aspx')
+        if urllib.parse.unquote(problem.lower()) in r.content.decode("utf-8").lower():
+            bias = 1
+    if bias == 1:
         return "1"
     else:
         return "0"
