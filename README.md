@@ -15,7 +15,6 @@ Our project helps to bridge this gap, by first suggesting alternatives for a pat
 
 ![Screenshot 2](screen1.png?raw=true)
 
-![Screenshot 3](screen2.png?raw=true)
 ![Screenshot 4](screen3.png?raw=true)
 ![Screenshot 5](screen4.png?raw=true)
 
